@@ -23,6 +23,7 @@ import Reflex
 import Reflex.Dom
 import qualified Data.Map as Map
 import Safe (readMay)
+import qualified Data.Text as T
 import Control.Applicative ((<*>), (<$>))
 
 main = mainWidget $ el "div" $ do
@@ -31,11 +32,11 @@ main = mainWidget $ el "div" $ do
   ny <- numberInput
   text " = "
   result <- combineDyn (\x y -> (+) <$> x <*> y) nx ny
-  resultString <- mapDyn show result
+  resultString <- mapDyn (T.pack . show) result
   dynText resultString
 
 numberInput :: MonadWidget t m => m (Dynamic t (Maybe Double))
 numberInput = do
   n <- textInput $ def & textInputConfig_inputType .~ "number"
                        & textInputConfig_initialValue .~ "0"
-  mapDyn readMay $ _textInput_value n
+  mapDyn (readMay . T.unpack) $ _textInput_value n
