@@ -30,9 +30,23 @@ import Control.Applicative ((<*>), (<$>))
 import Data.Monoid
 import Clay hiding ((&))
 
+import GHCJS.DOM
+import GHCJS.DOM.JSFFI.Generated.Document
+import GHCJS.DOM.JSFFI.Generated.NonElementParentNode
+
 import qualified CSS as CSS
 
-main = mainWidgetWithHead headWidget $ el "div" $ do
+main = do
+  print "Hello World!"
+  withJSContextSingletonMono $ \jsSing -> do
+    doc <- currentDocumentUnchecked
+    headElement <- getHeadUnchecked doc
+    attachWidget headElement jsSing headWidget
+    -- body <- getBodyUnchecked doc
+    body <- getElementByIdUnchecked doc ("content-thingy" :: T.Text)
+    attachWidget body jsSing widget
+  
+widget = el "div" $ do
   nx <- numberInput
   text " + "
   ny <- numberInput
@@ -43,9 +57,9 @@ main = mainWidgetWithHead headWidget $ el "div" $ do
 
 numberInput :: MonadWidget t m => m (Dynamic t (Maybe Double))
 numberInput = do
-  n <- Reflex.Bulma.textInput [] "Enter Text Here"
+  n <- Reflex.Dom.textInput
     $ def & textInputConfig_inputType .~ "number"
-          & textInputConfig_initialValue .~ "0"
+          & textInputConfig_initialValue .~ "5"
   mapDyn (readMay . T.unpack) $ _textInput_value n
 
 

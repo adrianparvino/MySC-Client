@@ -20,6 +20,7 @@ executable heroku-comment-client
                      , reflex
                      , reflex-dom
                      , reflex-bulma
+                     , ghcjs-dom-jsffi
                      , containers
                      , text
                      , safe

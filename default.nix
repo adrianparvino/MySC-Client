@@ -8,7 +8,7 @@ in pkgs.haskellPackages.mkDerivation {
   src = ./.;
 
   executableHaskellDepends = with pkgs.haskellPackages; [
-    reflex reflex-dom reflex-bulma safe clay
+    reflex reflex-dom reflex-bulma safe clay ghcjs-dom-jsffi
   ];
 
   buildTools = pkgs.stdenv.lib.optional runCompiler [pkgs.closurecompiler];
@@ -19,7 +19,6 @@ in pkgs.haskellPackages.mkDerivation {
     else "cp $out/bin/heroku-comment-client.jsexe/all.js $out/all.min.js") + "\n" +
     ''
       cp ${./static}/. -r $out
-      echo "<html> <head> <script src=\"all.min.js\"></script> </head> </html>" > $out/index.html
       rm -r $out/bin
     '';
 
