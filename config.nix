@@ -6,6 +6,7 @@ nixpkgs: compiler: {
         hlint = self.callPackage ./pkgs/hlint.nix {};
         jsaddle = self.callPackage ./pkgs/jsaddle.nix {};
         text = self.callPackage ./pkgs/text.nix {};
+        aeson = self.callPackage ./pkgs/aeson.nix {};
         reflex-dom-contrib = self.callPackage ./pkgs/reflex-dom-contrib.nix {};
 
         reflex-bulma = self.callPackage /home/myrl/Development/reflex-bulma {};

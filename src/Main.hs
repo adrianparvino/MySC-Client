@@ -21,12 +21,18 @@ module Main where
 
 import Reflex
 import Reflex.Dom
+import Reflex.Bulma
 import qualified Data.Map as Map
 import Safe (readMay)
 import qualified Data.Text as T
+import Data.Text.Lazy (toStrict)
 import Control.Applicative ((<*>), (<$>))
+import Data.Monoid
+import Clay hiding ((&))
 
-main = mainWidget $ el "div" $ do
+import qualified CSS as CSS
+
+main = mainWidgetWithHead headWidget $ el "div" $ do
   nx <- numberInput
   text " + "
   ny <- numberInput
@@ -37,6 +43,15 @@ main = mainWidget $ el "div" $ do
 
 numberInput :: MonadWidget t m => m (Dynamic t (Maybe Double))
 numberInput = do
-  n <- textInput $ def & textInputConfig_inputType .~ "number"
-                       & textInputConfig_initialValue .~ "0"
+  n <- Reflex.Bulma.textInput [] "Enter Text Here"
+    $ def & textInputConfig_inputType .~ "number"
+          & textInputConfig_initialValue .~ "0"
   mapDyn (readMay . T.unpack) $ _textInput_value n
+
+
+headWidget :: MonadWidget t m => m ()
+headWidget = do
+  el "style" . text . toStrict . render $ CSS.css
+  elAttr "link" ("href" =: "https://fonts.googleapis.com/css?family=Pacifico" <> "rel" =: "stylesheet") $ return ()
+  elAttr "link" ("href" =: "https://cdnjs.cloudflare.com/ajax/libs/bulma/0.4.1/css/bulma.min.css" <> "rel" =: "stylesheet") $ return ()
+  elAttr "script" ("src" =: "https://use.fontawesome.com/bc68209d19.js") $ return ()

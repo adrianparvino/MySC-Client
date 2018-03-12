@@ -8,7 +8,7 @@ in pkgs.haskellPackages.mkDerivation {
   src = ./.;
 
   executableHaskellDepends = with pkgs.haskellPackages; [
-    reflex reflex-dom reflex-bulma safe
+    reflex reflex-dom reflex-bulma safe clay
   ];
 
   buildTools = pkgs.stdenv.lib.optional runCompiler [pkgs.closurecompiler];
