@@ -1,14 +1,16 @@
-{ pkgs ? import <nixpkgs> {config = (import ./config.nix) pkgs compiler;}
-, compiler ? "ghcjsHEAD", runCompiler ? true
+{ pkgs ? import <nixpkgs> {config = (import ./config.nix);}
+, haskellPackages
+, runCompiler ? true
 }:
 let
-in pkgs.haskellPackages.mkDerivation {
+in haskellPackages.mkDerivation {
   pname = "MySC-Client";
   version = "0.1.0.0";
   src = ./.;
 
-  executableHaskellDepends = with pkgs.haskellPackages; [
+  executableHaskellDepends = with haskellPackages; [
     reflex reflex-dom reflex-bulma safe clay ghcjs-dom-jsffi
+    mysc-common
   ];
 
   buildTools = pkgs.stdenv.lib.optional runCompiler [pkgs.closurecompiler];
