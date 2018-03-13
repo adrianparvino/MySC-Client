@@ -4,7 +4,7 @@
 }:
 let
 in haskellPackages.mkDerivation {
-  pname = "MySC-Client";
+  pname = "mysc-client";
   version = "0.1.0.0";
   src = ./.;
 
