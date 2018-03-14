@@ -1,6 +1,6 @@
 { pkgs ? import <nixpkgs> {config = (import ./config.nix);}
 , haskellPackages
-, runCompiler ? true
+, runCompiler ? false
 }:
 let
 in haskellPackages.mkDerivation {
