@@ -17,8 +17,8 @@ in haskellPackages.mkDerivation {
   
   postInstall =
     (if runCompiler
-    then "closure-compiler --jscomp_off=checkVars -O ADVANCED --js $out/bin/heroku-comment-client.jsexe/all.js --js_output_file $out/all.min.js"
-    else "cp $out/bin/heroku-comment-client.jsexe/all.js $out/all.min.js") + "\n" +
+    then "closure-compiler --jscomp_off=checkVars -O ADVANCED --js $out/bin/mysc-client.jsexe/all.js --js_output_file $out/all.min.js"
+    else "cp $out/bin/mysc-client.jsexe/all.js $out/all.min.js") + "\n" +
     ''
       cp ${./static}/. -r $out
       rm -r $out/bin
