@@ -19,6 +19,7 @@
 
 module Main where
 
+import MySC.Common.DB.Types
 import Reflex
 import Reflex.Dom
 import Reflex.Bulma
@@ -28,44 +29,33 @@ import qualified Data.Text as T
 import Data.Text.Lazy (toStrict)
 import Control.Applicative ((<*>), (<$>))
 import Data.Monoid
-import Clay hiding ((&))
+import Data.Maybe
+import Data.Traversable
 
 import GHCJS.DOM
 import GHCJS.DOM.JSFFI.Generated.Document
 import GHCJS.DOM.JSFFI.Generated.NonElementParentNode
 
-import qualified CSS as CSS
-
-main = do
-  print "Hello World!"
-  withJSContextSingletonMono $ \jsSing -> do
-    doc <- currentDocumentUnchecked
-    headElement <- getHeadUnchecked doc
-    attachWidget headElement jsSing headWidget
-    -- body <- getBodyUnchecked doc
-    body <- getElementByIdUnchecked doc ("content-thingy" :: T.Text)
-    attachWidget body jsSing widget
+main = withJSContextSingletonMono $ \jsSing -> do
+  doc <- currentDocumentUnchecked
+  body <- getElementByIdUnchecked doc ("comments" :: T.Text)
+  attachWidget body jsSing comments
   
-widget = el "div" $ do
-  nx <- numberInput
-  text " + "
-  ny <- numberInput
-  text " = "
-  result <- combineDyn (\x y -> (+) <$> x <*> y) nx ny
-  resultString <- mapDyn (T.pack . show) result
-  dynText resultString
+comments :: MonadWidget t m
+        -> m (Event t [(), ()])
+comments = do
+  postBuild <- getPostBuild
+  commentsEvent <- fmap (fromJust . decodeXhrResponse) <$> performRequestAsync (xhrRequest "GET" "localhost:8080/json" def <$ postBuild)
+  for commentsEvent $ comment
 
+comment :: MonadWidget t m
+        => Event t Comment
+        -> m (Event t ((), ()))
+comment commentEvent =
+  card [] (Just ("a", Nothing)) (constDyn <$> text "b") ([(Nothing, "Reply", ())])
 numberInput :: MonadWidget t m => m (Dynamic t (Maybe Double))
 numberInput = do
   n <- Reflex.Dom.textInput
     $ def & textInputConfig_inputType .~ "number"
           & textInputConfig_initialValue .~ "5"
   mapDyn (readMay . T.unpack) $ _textInput_value n
-
-
-headWidget :: MonadWidget t m => m ()
-headWidget = do
-  el "style" . text . toStrict . render $ CSS.css
-  elAttr "link" ("href" =: "https://fonts.googleapis.com/css?family=Pacifico" <> "rel" =: "stylesheet") $ return ()
-  elAttr "link" ("href" =: "https://cdnjs.cloudflare.com/ajax/libs/bulma/0.4.1/css/bulma.min.css" <> "rel" =: "stylesheet") $ return ()
-  elAttr "script" ("src" =: "https://use.fontawesome.com/bc68209d19.js") $ return ()

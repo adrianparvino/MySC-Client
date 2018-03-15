@@ -25,3 +25,4 @@ executable mysc-client
                      , text
                      , safe
                      , clay
+                     , mysc-common
