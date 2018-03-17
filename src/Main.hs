@@ -31,6 +31,7 @@ import Control.Applicative ((<*>), (<$>))
 import Data.Monoid
 import Data.Maybe
 import Data.Traversable
+import Control.Monad
 
 import GHCJS.DOM
 import GHCJS.DOM.JSFFI.Generated.Document
@@ -39,16 +40,14 @@ import GHCJS.DOM.JSFFI.Generated.NonElementParentNode
 main = withJSContextSingletonMono $ \jsSing -> do
   doc <- currentDocumentUnchecked
   body <- getElementByIdUnchecked doc ("comments" :: T.Text)
-  attachWidget body jsSing comments
+  attachWidget body jsSing $ void comments
             
 comments :: MonadWidget t m
-         => m ()
---         -> m (Dynamic t [Event t [((), ())]])
+         => m (Dynamic t [Event t (((), CommentId))])
 comments = do
   postBuild <- getPostBuild
   commentsEvent <- getAndDecode ("/json" <$ postBuild)
   widgetHold (return []) $ fmap (maybe (return []) (traverse comment)) commentsEvent
-  return ()
 
 comment :: MonadWidget t m
         => (CommentId, Comment)
