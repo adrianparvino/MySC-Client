@@ -40,22 +40,18 @@ main = withJSContextSingletonMono $ \jsSing -> do
   doc <- currentDocumentUnchecked
   body <- getElementByIdUnchecked doc ("comments" :: T.Text)
   attachWidget body jsSing comments
-  
+            
 comments :: MonadWidget t m
-        -> m (Event t [(), ()])
+         => m ()
+--         -> m (Dynamic t [Event t [((), ())]])
 comments = do
   postBuild <- getPostBuild
-  commentsEvent <- fmap (fromJust . decodeXhrResponse) <$> performRequestAsync (xhrRequest "GET" "localhost:8080/json" def <$ postBuild)
-  for commentsEvent $ comment
+  commentsEvent <- getAndDecode ("/json" <$ postBuild)
+  widgetHold (return []) $ fmap (maybe (return []) (traverse comment)) commentsEvent
+  return ()
 
 comment :: MonadWidget t m
-        => Event t Comment
-        -> m (Event t ((), ()))
-comment commentEvent =
-  card [] (Just ("a", Nothing)) (constDyn <$> text "b") ([(Nothing, "Reply", ())])
-numberInput :: MonadWidget t m => m (Dynamic t (Maybe Double))
-numberInput = do
-  n <- Reflex.Dom.textInput
-    $ def & textInputConfig_inputType .~ "number"
-          & textInputConfig_initialValue .~ "5"
-  mapDyn (readMay . T.unpack) $ _textInput_value n
+        => (CommentId, Comment)
+        -> m (Event t ((), CommentId))
+comment (commentid, comment) =
+  card [] (Just (commentName comment, Nothing)) (constDyn () <$ (text $ commentContent comment)) ([(Nothing, "Reply", commentid)])
