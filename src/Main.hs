@@ -19,38 +19,75 @@
 
 module Main where
 
-import MySC.Common.DB.Types
-import Reflex
-import Reflex.Dom
-import Reflex.Bulma
+import           Control.Applicative ((<*>), (<$>))
+import           Control.Monad
+import Control.Monad.IO.Class
 import qualified Data.Map as Map
-import Safe (readMay)
+import           Data.Maybe
+import           Data.Monoid
 import qualified Data.Text as T
-import Data.Text.Lazy (toStrict)
-import Control.Applicative ((<*>), (<$>))
-import Data.Monoid
-import Data.Maybe
-import Data.Traversable
-import Control.Monad
+import           Data.Text.Lazy (toStrict)
+import           Data.Time.Clock
+import           Data.Traversable
+import           MySC.Common.DB.Types
+import           Reflex
+import           Reflex.Bulma
+import           Reflex.Dom
+import           Safe (readMay)
 
-import GHCJS.DOM
-import GHCJS.DOM.JSFFI.Generated.Document
-import GHCJS.DOM.JSFFI.Generated.NonElementParentNode
+import           GHCJS.DOM
+import           GHCJS.DOM.JSFFI.Generated.Document
+import           GHCJS.DOM.JSFFI.Generated.NonElementParentNode
 
 main = withJSContextSingletonMono $ \jsSing -> do
   doc <- currentDocumentUnchecked
   body <- getElementByIdUnchecked doc ("comments" :: T.Text)
-  attachWidget body jsSing $ void comments
-            
+  attachWidget body jsSing widget
+
+widget :: MonadWidget t m
+       => m ()
+widget = do
+  comments
+  postComment
+  pure ()
+
+postComment :: MonadWidget t m
+            => m ()
+postComment = void $ do
+  commentTextE' <- card []
+                        (Just ("Comment", Nothing))
+                        (_textInput_value <$> Reflex.Bulma.textInput [] "")           
+                        (constDyn [(Nothing, "Post", ())])
+  currentTime <- performEvent $ fmap (\(commentText, _) -> 
+                                        (,) commentText <$> liftIO getCurrentTime) 
+                                     commentTextE'
+  let commentE' = (\(commentText, time) ->
+                     Comment "Sample"
+                             commentText
+                             1
+                             time
+                             Nothing
+                             Nothing) <$> currentTime
+  performRequestAsync $ postJson "/" <$> commentE'
+    where
+     toComment time (commentText, _) = 
+       Comment 
+         "Sample"
+         commentText
+         1
+         time
+         Nothing
+         Nothing
+  
 comments :: MonadWidget t m
          => m (Dynamic t [Event t (((), CommentId))])
 comments = do
   postBuild <- getPostBuild
   commentsEvent <- getAndDecode ("/json" <$ postBuild)
-  widgetHold (return []) $ fmap (maybe (return []) (traverse comment)) commentsEvent
+  widgetHold (pure []) $ fmap (maybe (pure []) (traverse comment)) commentsEvent
 
 comment :: MonadWidget t m
         => (CommentId, Comment)
         -> m (Event t ((), CommentId))
 comment (commentid, comment) =
-  card [] (Just (commentName comment, Nothing)) (constDyn () <$ (text $ commentContent comment)) ([(Nothing, "Reply", commentid)])
+  card [] (Just (commentName comment, Nothing)) (constDyn () <$ (text $ commentContent comment)) (constDyn [(Nothing, "Reply", commentid)])
