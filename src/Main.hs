@@ -46,14 +46,13 @@ main = withJSContextSingletonMono $ \jsSing -> do
 
 widget :: MonadWidget t m
        => m ()
-widget = do
+widget = void $ do
   comments
   postComment
-  pure ()
 
 postComment :: MonadWidget t m
             => m ()
-postComment = void $ do
+postComment = void $
   card [] $ \header body footer -> do
     header $ \title _ -> title "Post Comment"
     comment <- body   $ _textInput_value <$> textInput [] ""
@@ -70,13 +69,13 @@ comments :: MonadWidget t m
 comments = void $ do
   postBuild <- getPostBuild
   commentsEvent <- getAndDecode ("/json" <$ postBuild)
-  widgetHold (pure []) $ fmap (maybe (pure []) (traverse comment)) commentsEvent
+  widgetHold (pure []) $ maybe (pure []) (traverse comment) <$> commentsEvent
 
 comment :: MonadWidget t m
         => (CommentId, Comment)
         -> m ()
 comment (commentId, comment) = void $ do
   card [] $ \header body footer -> do
-    header $ \title _ -> title "Comment"
-    body   $ text $ commentContent comment
+    header $ \title _ -> title $ commentName comment
+    body   $             text  $ commentContent comment
     footer $ \item    -> item Nothing "Reply"
