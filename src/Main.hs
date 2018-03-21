@@ -32,7 +32,7 @@ import           Data.Traversable
 import           MySC.Common.DB.Types
 import           Reflex
 import           Reflex.Bulma
-import           Reflex.Dom
+import           Reflex.Dom hiding (textInput)
 import           Safe (readMay)
 
 import           GHCJS.DOM
@@ -54,40 +54,29 @@ widget = do
 postComment :: MonadWidget t m
             => m ()
 postComment = void $ do
-  commentTextE' <- card []
-                        (Just ("Comment", Nothing))
-                        (_textInput_value <$> Reflex.Bulma.textInput [] "")           
-                        (constDyn [(Nothing, "Post", ())])
-  currentTime <- performEvent $ fmap (\(commentText, _) -> 
-                                        (,) commentText <$> liftIO getCurrentTime) 
-                                     commentTextE'
-  let commentE' = (\(commentText, time) ->
-                     Comment "Sample"
-                             commentText
-                             1
-                             time
-                             Nothing
-                             Nothing) <$> currentTime
-  performRequestAsync $ postJson "/" <$> commentE'
-    where
-     toComment time (commentText, _) = 
-       Comment 
-         "Sample"
-         commentText
-         1
-         time
-         Nothing
-         Nothing
-  
+  card [] $ \header body footer -> do
+    header $ \title _ -> title "Post Comment"
+    comment <- body   $ _textInput_value <$> textInput [] ""
+    click   <- footer $ \item -> item () "Post"
+
+    commentE' <- performEvent $
+      ffor (tagDyn comment click) $ \commentText ->
+        ffor (liftIO getCurrentTime) $ \time ->
+          Comment "Sample" commentText 1 time Nothing Nothing
+    performRequestAsync $ postJson "/" <$> commentE'
+
 comments :: MonadWidget t m
-         => m (Dynamic t [Event t (((), CommentId))])
-comments = do
+         => m ()
+comments = void $ do
   postBuild <- getPostBuild
   commentsEvent <- getAndDecode ("/json" <$ postBuild)
   widgetHold (pure []) $ fmap (maybe (pure []) (traverse comment)) commentsEvent
 
 comment :: MonadWidget t m
         => (CommentId, Comment)
-        -> m (Event t ((), CommentId))
-comment (commentid, comment) =
-  card [] (Just (commentName comment, Nothing)) (constDyn () <$ (text $ commentContent comment)) (constDyn [(Nothing, "Reply", commentid)])
+        -> m ()
+comment (commentId, comment) = void $ do
+  card [] $ \header body footer -> do
+    header $ \title _ -> title "Comment"
+    body   $ text $ commentContent comment
+    footer $ \item    -> item Nothing "Reply"
